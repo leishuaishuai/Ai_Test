@@ -84,7 +84,7 @@ public class CourseServiceImpl extends ServiceImpl<CourseMapper, Course> impleme
     @Override
     @Transactional
     public void deleteCourse(Long id) {
-        if (!existsById(id)) {
+        if (getById(id) == null) {
             throw new IllegalArgumentException("课程不存在");
         }
         removeById(id);

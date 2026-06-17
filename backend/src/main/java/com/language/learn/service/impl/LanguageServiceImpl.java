@@ -68,7 +68,7 @@ public class LanguageServiceImpl extends ServiceImpl<LanguageMapper, Language> i
     @Override
     @Transactional
     public void deleteLanguage(Long id) {
-        if (!existsById(id)) {
+        if (getById(id) == null) {
             throw new IllegalArgumentException("语言不存在");
         }
         removeById(id);

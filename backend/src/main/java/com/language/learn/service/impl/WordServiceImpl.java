@@ -83,7 +83,7 @@ public class WordServiceImpl extends ServiceImpl<WordMapper, Word> implements Wo
     @Override
     @Transactional
     public void deleteWord(Long id) {
-        if (!existsById(id)) {
+        if (getById(id) == null) {
             throw new IllegalArgumentException("单词不存在");
         }
         removeById(id);

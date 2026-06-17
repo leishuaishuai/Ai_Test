@@ -27,6 +27,8 @@ public class Achievement {
 
     private Integer points;
 
+    private Integer sortOrder;
+
     private Integer status;
 
     @TableField(fill = FieldFill.INSERT)

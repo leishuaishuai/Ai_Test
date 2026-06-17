@@ -139,7 +139,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     @Transactional
     public void deleteUser(Long userId) {
-        if (!existsById(userId)) {
+        if (getById(userId) == null) {
             throw new IllegalArgumentException("用户不存在");
         }
         removeById(userId);

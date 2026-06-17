@@ -101,7 +101,7 @@ public class AchievementServiceImpl extends ServiceImpl<AchievementMapper, Achie
     @Override
     @Transactional
     public void deleteAchievement(Long id) {
-        if (!existsById(id)) {
+        if (getById(id) == null) {
             throw new IllegalArgumentException("成就不存在");
         }
         removeById(id);

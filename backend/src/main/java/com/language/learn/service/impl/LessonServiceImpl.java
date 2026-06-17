@@ -77,7 +77,7 @@ public class LessonServiceImpl extends ServiceImpl<LessonMapper, Lesson> impleme
     @Override
     @Transactional
     public void deleteLesson(Long id) {
-        if (!existsById(id)) {
+        if (getById(id) == null) {
             throw new IllegalArgumentException("课时不存在");
         }
         removeById(id);
