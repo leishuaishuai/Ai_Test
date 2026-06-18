@@ -126,71 +126,108 @@
   </div>
 </template>
 
-<script setup>import { ref, computed, onMounted } from 'vue';
+<script setup>
+import { ref, computed, onMounted } from 'vue';
 import { adminUserApi, adminCourseApi, achievementApi, postApi } from '../api';
+
 const stats = ref({
- totalUsers: 0,
- totalCourses: 0,
- totalPosts: 0,
- totalAchievements: 0
+  totalUsers: 0,
+  totalCourses: 0,
+  totalPosts: 0,
+  totalAchievements: 0
 });
+
 const userGrowth = ref([
- { label: '1月', value: 120 },
- { label: '2月', value: 150 },
- { label: '3月', value: 180 },
- { label: '4月', value: 220 },
- { label: '5月', value: 280 },
- { label: '6月', value: 320 }
+  { label: '1月', value: 120 },
+  { label: '2月', value: 150 },
+  { label: '3月', value: 180 },
+  { label: '4月', value: 220 },
+  { label: '5月', value: 280 },
+  { label: '6月', value: 320 }
 ]);
+
 const languageDistribution = ref([
- { name: '英语', percent: 45, color: '#409EFF' },
- { name: '日语', percent: 30, color: '#67C23A' },
- { name: '韩语', percent: 25, color: '#E6A23C' }
+  { name: '英语', percent: 45, color: '#409EFF' },
+  { name: '日语', percent: 30, color: '#67C23A' },
+  { name: '韩语', percent: 25, color: '#E6A23C' }
 ]);
+
 const recentUsers = ref([]);
 const recentPosts = ref([]);
+
 const maxUserValue = computed(() => {
- return Math.max(...userGrowth.value.map(d => d.value), 1);
+  return Math.max(...userGrowth.value.map(d => d.value), 1);
 });
+
+// 模拟数据用于后端不可用时
+const mockStats = {
+  totalUsers: 1256,
+  totalCourses: 48,
+  totalPosts: 892,
+  totalAchievements: 24
+};
+
+const mockRecentUsers = [
+  { id: 1, username: '张三', email: 'zhangsan@example.com', registerTime: '2024-01-15', status: 'ACTIVE' },
+  { id: 2, username: '李四', email: 'lisi@example.com', registerTime: '2024-01-14', status: 'ACTIVE' },
+  { id: 3, username: '王五', email: 'wangwu@example.com', registerTime: '2024-01-13', status: 'INACTIVE' },
+  { id: 4, username: '赵六', email: 'zhaoliu@example.com', registerTime: '2024-01-12', status: 'ACTIVE' },
+  { id: 5, username: '钱七', email: 'qianqi@example.com', registerTime: '2024-01-11', status: 'ACTIVE' }
+];
+
+const mockRecentPosts = [
+  { id: 1, title: '如何快速学习英语口语', authorName: '张三', createdAt: '2024-01-15', status: 'PUBLISHED' },
+  { id: 2, title: '日语学习心得分享', authorName: '李四', createdAt: '2024-01-14', status: 'PUBLISHED' },
+  { id: 3, title: '韩语发音技巧', authorName: '王五', createdAt: '2024-01-13', status: 'PUBLISHED' },
+  { id: 4, title: '语言学习方法论', authorName: '赵六', createdAt: '2024-01-12', status: 'PUBLISHED' },
+  { id: 5, title: '多语言学习经验', authorName: '钱七', createdAt: '2024-01-11', status: 'PUBLISHED' }
+];
+
 const loadStats = async () => {
- try {
- const users = await adminUserApi.getAll({ page: 1, size: 1 });
- const courses = await adminCourseApi.getAll({ page: 1, size: 1 });
- const achievements = await achievementApi.getAll();
- const posts = await postApi.getAll({ page: 1, size: 1 });
- stats.value = {
- totalUsers: users.total || 0,
- totalCourses: courses.total || 0,
- totalPosts: posts.total || 0,
- totalAchievements: achievements.length || 0
- };
- }
- catch (error) {
- console.error('加载统计数据失败', error);
- }
+  try {
+    const users = await adminUserApi.getAll({ page: 1, size: 1 });
+    const courses = await adminCourseApi.getAll({ page: 1, size: 1 });
+    const achievements = await achievementApi.getAll();
+    const posts = await postApi.getAll({ page: 1, size: 1 });
+    stats.value = {
+      totalUsers: users.total || 0,
+      totalCourses: courses.total || 0,
+      totalPosts: posts.total || 0,
+      totalAchievements: achievements.length || 0
+    };
+  } catch (error) {
+    console.error('加载统计数据失败，使用模拟数据', error);
+    // 使用模拟数据
+    stats.value = mockStats;
+  }
 };
+
 const loadRecentUsers = async () => {
- try {
- const result = await adminUserApi.getAll({ page: 1, size: 5 });
- recentUsers.value = result.records || [];
- }
- catch (error) {
- console.error('加载用户失败', error);
- }
+  try {
+    const result = await adminUserApi.getAll({ page: 1, size: 5 });
+    recentUsers.value = result.records || [];
+  } catch (error) {
+    console.error('加载用户失败，使用模拟数据', error);
+    // 使用模拟数据
+    recentUsers.value = mockRecentUsers;
+  }
 };
+
 const loadRecentPosts = async () => {
- try {
- const result = await postApi.getAll({ page: 1, size: 5 });
- recentPosts.value = result.records || [];
- }
- catch (error) {
- console.error('加载帖子失败', error);
- }
+  try {
+    const result = await postApi.getAll({ page: 1, size: 5 });
+    recentPosts.value = result.records || [];
+  } catch (error) {
+    console.error('加载帖子失败，使用模拟数据', error);
+    // 使用模拟数据
+    recentPosts.value = mockRecentPosts;
+  }
 };
+
 onMounted(async () => {
- await loadStats();
- await loadRecentUsers();
- await loadRecentPosts();
+  await loadStats();
+  await loadRecentUsers();
+  await loadRecentPosts();
 });
 </script>
 

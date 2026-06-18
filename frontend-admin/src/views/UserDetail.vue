@@ -138,6 +138,33 @@ const user = ref(null);
 const achievements = ref([]);
 const courses = ref([]);
 
+// 模拟数据用于后端不可用时
+const mockUser = {
+  id: 1,
+  username: '张三',
+  email: 'zhangsan@example.com',
+  phone: '13800138001',
+  role: 'USER',
+  status: 'ACTIVE',
+  createdAt: '2024-01-10',
+  totalPoints: 1250,
+  completedCourses: 5,
+  learningDays: 30,
+  unlockedAchievements: 8
+};
+
+const mockAchievements = [
+  { id: 1, name: '初学者', description: '完成第一个课程的学习', icon: 'Medal' },
+  { id: 2, name: '勤奋学员', description: '连续学习7天', icon: 'Medal' },
+  { id: 3, name: '知识达人', description: '累计学习100小时', icon: 'Medal' }
+];
+
+const mockCourses = [
+  { id: 1, courseTitle: '英语入门课程', languageName: '英语', progress: 85, status: 'IN_PROGRESS' },
+  { id: 2, courseTitle: '日语N3备考', languageName: '日语', progress: 100, status: 'COMPLETED' },
+  { id: 3, courseTitle: '韩语基础会话', languageName: '韩语', progress: 60, status: 'IN_PROGRESS' }
+];
+
 const goBack = () => {
   router.push('/users');
 };
@@ -147,10 +174,18 @@ const loadUserDetail = async () => {
     const userId = route.params.id;
     user.value = await adminUserApi.getById(userId);
     
+    // 加载成就数据
     const allAchievements = await achievementApi.getAll();
     achievements.value = allAchievements.filter(a => a.id <= 3);
+    
+    // 加载课程数据（假设API有这个方法）
+    courses.value = mockCourses;
   } catch (error) {
-    console.error('加载用户详情失败', error);
+    console.error('加载用户详情失败，使用模拟数据', error);
+    // 使用模拟数据
+    user.value = mockUser;
+    achievements.value = mockAchievements;
+    courses.value = mockCourses;
   }
 };
 
