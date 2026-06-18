@@ -46,8 +46,8 @@
 </template>
 
 <script setup>import { computed } from 'vue';
-import { useRouter, useStore } from 'vue-router';
-import { useRoute } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
+import { useStore } from 'vuex';
 const router = useRouter();
 const route = useRoute();
 const store = useStore();

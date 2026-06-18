@@ -24,7 +24,8 @@
 </template>
 
 <script setup>import { ref } from 'vue';
-import { useRouter, useStore } from 'vue-router';
+import { useRouter } from 'vue-router';
+import { useStore } from 'vuex';
 import { authApi } from '../api';
 const router = useRouter();
 const store = useStore();
