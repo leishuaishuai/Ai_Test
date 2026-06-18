@@ -29,7 +29,7 @@
           <span>{{ post.viewCount }}</span>
         </div>
         <div class="stat-item" @click="toggleLike">
-          <el-icon :class="{ liked: post.liked }">Star</el-icon>
+          <el-icon :class="{ liked: post.isLiked }">Star</el-icon>
           <span>{{ post.likeCount }}</span>
         </div>
         <div class="stat-item">
@@ -87,15 +87,17 @@
 <script setup>import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { postApi, commentApi } from '../api';
+import { ElMessage } from 'element-plus';
 const route = useRoute();
 const post = ref(null);
 const comments = ref([]);
 const commentText = ref('');
+const loading = ref(false);
 const toggleLike = async () => {
  if (!post.value)
  return;
  try {
- if (post.value.liked) {
+ if (post.value.isLiked) {
  await postApi.unlike(post.value.id);
  post.value.likeCount--;
  }
@@ -103,40 +105,58 @@ const toggleLike = async () => {
  await postApi.like(post.value.id);
  post.value.likeCount++;
  }
- post.value.liked = !post.value.liked;
+ post.value.isLiked = !post.value.isLiked;
+ ElMessage.success(post.value.isLiked ? '点赞成功' : '取消点赞');
  }
  catch (error) {
  console.error('点赞失败', error);
+ ElMessage.error('操作失败');
  }
 };
 const likeComment = async (comment) => {
+ ElMessage.info('评论点赞功能开发中');
 };
 const submitComment = async () => {
  if (!commentText.value.trim())
  return;
  try {
- await commentApi.create({
+ const res = await commentApi.create({
  postId: route.params.id,
  content: commentText.value
  });
+ if (res.code === 200) {
  commentText.value = '';
+ ElMessage.success('评论成功');
  loadComments();
+ }
  }
  catch (error) {
  console.error('发表评论失败', error);
+ ElMessage.error('发表评论失败');
  }
 };
 const loadPost = async () => {
+ loading.value = true;
  try {
- post.value = await postApi.getById(route.params.id);
+ const res = await postApi.getById(route.params.id);
+ if (res.code === 200) {
+ post.value = res.data;
+ }
  }
  catch (error) {
  console.error('加载帖子失败', error);
+ ElMessage.error('加载帖子失败');
+ }
+ finally {
+ loading.value = false;
  }
 };
 const loadComments = async () => {
  try {
- comments.value = await commentApi.getByPost(route.params.id);
+ const res = await commentApi.getByPost(route.params.id);
+ if (res.code === 200) {
+ comments.value = res.data || [];
+ }
  }
  catch (error) {
  console.error('加载评论失败', error);

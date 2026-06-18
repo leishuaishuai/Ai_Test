@@ -24,7 +24,7 @@
       <div class="word-card">
         <div class="word-display">
           <span class="word-text">{{ currentWord.word }}</span>
-          <span class="pronunciation">{{ currentWord.pronunciation }}</span>
+          <span class="pronunciation">{{ currentWord.phonetic }}</span>
         </div>
         <button class="show-answer-btn" @click="showAnswer" v-if="!showingAnswer">
           显示答案
@@ -92,6 +92,7 @@
 
 <script setup>import { ref, computed, onMounted } from 'vue';
 import { wordApi, learningApi } from '../api';
+import { ElMessage } from 'element-plus';
 const reviewWords = ref([]);
 const currentIndex = ref(0);
 const showingAnswer = ref(false);
@@ -112,7 +113,10 @@ const accuracy = computed(() => {
 });
 const loadReviewWords = async () => {
  try {
- reviewWords.value = await wordApi.getForReview();
+ const res = await wordApi.getForReview();
+ if (res.code === 200) {
+ reviewWords.value = res.data || [];
+ }
  currentIndex.value = 0;
  showingAnswer.value = false;
  correctCount.value = 0;
@@ -121,6 +125,7 @@ const loadReviewWords = async () => {
  }
  catch (error) {
  console.error('加载复习单词失败', error);
+ ElMessage.error('加载复习单词失败');
  }
 };
 const showAnswer = () => {
@@ -130,24 +135,28 @@ const markAsKnow = async () => {
  if (!currentWord.value)
  return;
  try {
- await learningApi.updateWordProgress(currentWord.value.id, { progress: 100 });
+ await learningApi.updateWordProgress(currentWord.value.id, { isCorrect: true });
  correctCount.value++;
+ ElMessage.success('回答正确！');
  nextWord();
  }
  catch (error) {
  console.error('更新进度失败', error);
+ ElMessage.error('更新进度失败');
  }
 };
 const markAsForget = async () => {
  if (!currentWord.value)
  return;
  try {
- await learningApi.updateWordProgress(currentWord.value.id, { progress: 0 });
+ await learningApi.updateWordProgress(currentWord.value.id, { isCorrect: false });
  wrongCount.value++;
+ ElMessage.warning('继续加油！');
  nextWord();
  }
  catch (error) {
  console.error('更新进度失败', error);
+ ElMessage.error('更新进度失败');
  }
 };
 const nextWord = () => {

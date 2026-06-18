@@ -144,26 +144,13 @@
 import { learningApi } from '../api';
 const statistics = ref(null);
 const courseProgress = ref([]);
-const weekData = ref([
- { label: '周一', hours: 2.5 },
- { label: '周二', hours: 1.8 },
- { label: '周三', hours: 3.2 },
- { label: '周四', hours: 2.0 },
- { label: '周五', hours: 4.0 },
- { label: '周六', hours: 3.5 },
- { label: '周日', hours: 2.2 }
-]);
+const weekData = ref([]);
 const wordStats = ref({
- mastered: 120,
- learning: 45,
- new: 35
+ mastered: 0,
+ learning: 0,
+ new: 0
 });
-const recentActivity = ref([
- { id: 1, type: 'lesson', title: '完成课程', description: '英语初级 - 第三课：日常对话', time: '2小时前' },
- { id: 2, type: 'word', title: '学习单词', description: '学习了 15 个新单词', time: '5小时前' },
- { id: 3, type: 'review', title: '单词复习', description: '复习了 20 个单词，正确率 85%', time: '昨天' },
- { id: 4, type: 'course', title: '开始新课程', description: '日语入门课程', time: '2天前' }
-]);
+const recentActivity = ref([]);
 const maxHours = computed(() => {
  return Math.max(...weekData.value.map(d => d.hours), 1);
 });
@@ -172,17 +159,17 @@ const totalWords = computed(() => {
 });
 const masteredPercent = computed(() => {
  if (totalWords.value === 0)
- return 0;
+  return 0;
  return Math.round((wordStats.value.mastered / totalWords.value) * 100);
 });
 const learningPercent = computed(() => {
  if (totalWords.value === 0)
- return 0;
+  return 0;
  return Math.round((wordStats.value.learning / totalWords.value) * 100);
 });
 const newPercent = computed(() => {
  if (totalWords.value === 0)
- return 0;
+  return 0;
  return Math.round((wordStats.value.new / totalWords.value) * 100);
 });
 const getActivityIcon = (type) => {
@@ -196,23 +183,72 @@ const getActivityIcon = (type) => {
 };
 const loadStatistics = async () => {
  try {
- statistics.value = await learningApi.getStatistics();
+  const response = await learningApi.getStatistics();
+  statistics.value = response.data || response;
  }
  catch (error) {
- console.error('加载统计信息失败', error);
+  console.error('加载统计信息失败', error);
  }
 };
 const loadCourseProgress = async () => {
  try {
- courseProgress.value = await learningApi.getCourseProgress();
+  const response = await learningApi.getCourseProgress();
+  const progressList = response.data || response;
+  courseProgress.value = progressList.map(p => ({
+    courseId: p.courseId,
+    courseTitle: p.course?.title || '未知课程',
+    languageName: p.course?.language?.name || '未知语言',
+    progress: p.progressPercent || 0
+  }));
  }
  catch (error) {
- console.error('加载课程进度失败', error);
+  console.error('加载课程进度失败', error);
+ }
+};
+const loadWeeklyStatistics = async () => {
+ try {
+  const response = await learningApi.getWeeklyStatistics();
+  const weeklyStats = response.data || response;
+  if (weeklyStats.dailyData) {
+    weekData.value = weeklyStats.dailyData;
+  }
+ }
+ catch (error) {
+  console.error('加载每周统计失败', error);
+ }
+};
+const loadWordStats = async () => {
+ try {
+  const response = await learningApi.getWordStats();
+  wordStats.value = response.data || response;
+ }
+ catch (error) {
+  console.error('加载单词统计失败', error);
+ }
+};
+const loadReviewRecommendations = async () => {
+ try {
+  const response = await learningApi.getReviewRecommendations();
+  const recommendations = response.data || response;
+  recentActivity.value = recommendations.slice(0, 4).map((r, index) => ({
+    id: index,
+    type: 'word',
+    title: '复习单词',
+    description: `${r.word} - ${r.meaning}`,
+    time: r.nextReviewTime ? '即将复习' : '待复习'
+  }));
+ }
+ catch (error) {
+  console.error('加载复习推荐失败', error);
+  recentActivity.value = [];
  }
 };
 onMounted(async () => {
  await loadStatistics();
  await loadCourseProgress();
+ await loadWeeklyStatistics();
+ await loadWordStats();
+ await loadReviewRecommendations();
 });
 </script>
 

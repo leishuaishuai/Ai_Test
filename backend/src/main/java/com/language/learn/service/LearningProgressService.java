@@ -1,4 +1,3 @@
-
 package com.language.learn.service;
 
 import com.language.learn.entity.UserCourseProgress;
@@ -24,7 +23,19 @@ public interface LearningProgressService {
 
     UserWordProgress updateWordProgress(Long userId, Long wordId, Boolean isCorrect);
 
+    UserWordProgress updateWordProgress(Long userId, Long wordId, Integer progress);
+
+    List<UserWordProgress> getWordProgressList(Long userId, Long languageId);
+
     Map<String, Object> getLearningStatistics(Long userId);
 
+    Map<String, Object> getDailyStatistics(Long userId);
+
+    Map<String, Object> getWeeklyStatistics(Long userId);
+
     List<Map<String, Object>> getRecommendedCourses(Long userId);
+
+    List<Map<String, Object>> getWordsForReviewRecommendation(Long userId);
+
+    int getReviewWordsCount(Long userId);
 }

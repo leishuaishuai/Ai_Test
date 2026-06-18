@@ -5,12 +5,13 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.language.learn.entity.Post;
 
 import java.util.List;
+import java.util.Map;
 
 public interface PostService extends IService<Post> {
 
-    List<Post> getPosts(Integer page, Integer size, Long languageId);
+    List<Map<String, Object>> getPosts(Integer page, Integer size, Long languageId);
 
-    Post getPostById(Long id);
+    Map<String, Object> getPostById(Long id);
 
     Post createPost(Long userId, Post post);
 

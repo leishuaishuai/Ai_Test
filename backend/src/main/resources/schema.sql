@@ -162,6 +162,7 @@ CREATE TABLE IF NOT EXISTS `user_word_progress` (
     `status` TINYINT DEFAULT 0 COMMENT '状态：0-未学习，1-学习中，2-已掌握',
     `correct_count` INT DEFAULT 0 COMMENT '正确次数',
     `wrong_count` INT DEFAULT 0 COMMENT '错误次数',
+    `progress` INT DEFAULT 0 COMMENT '学习进度百分比：0-100',
     `last_review_time` DATETIME COMMENT '最后复习时间',
     `next_review_time` DATETIME COMMENT '下次复习时间',
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -203,13 +204,18 @@ CREATE TABLE IF NOT EXISTS `user_daily_sign` (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `achievement` (
     `id` BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '成就ID',
-    `name` VARCHAR(100) NOT NULL COMMENT '成就名称',
+    `title` VARCHAR(100) NOT NULL COMMENT '成就名称',
     `description` VARCHAR(500) COMMENT '成就描述',
     `icon` VARCHAR(255) COMMENT '成就图标',
-    `type` TINYINT NOT NULL COMMENT '类型：1-学习时长，2-课程完成，3-单词掌握，4-连续打卡',
-    `threshold` INT NOT NULL COMMENT '达成阈值',
+    `type` TINYINT NOT NULL COMMENT '类型：1-学习时长，2-课时完成，3-单词掌握，4-连续打卡，5-课程完成',
+    `condition_value` INT NOT NULL COMMENT '达成阈值',
+    `condition_unit` VARCHAR(20) COMMENT '条件单位',
     `points` INT DEFAULT 0 COMMENT '积分奖励',
-    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+    `sort_order` INT DEFAULT 0 COMMENT '排序',
+    `status` TINYINT DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `deleted` TINYINT DEFAULT 0 COMMENT '逻辑删除'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成就表';
 
 -- -----------------------------------------------------

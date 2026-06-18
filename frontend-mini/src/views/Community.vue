@@ -68,8 +68,9 @@
   </div>
 </template>
 
-<script setup>import { ref, onMounted } from 'vue';
+<script setup>import { ref, onMounted, watch } from 'vue';
 import { postApi } from '../api';
+import { ElMessage } from 'element-plus';
 const activeTab = ref('all');
 const tabs = [
  { key: 'all', label: '全部' },
@@ -78,56 +79,8 @@ const tabs = [
  { key: 'resource', label: '资源分享' },
  { key: 'discussion', label: '话题讨论' }
 ];
-const posts = ref([
- {
- id: 1,
- title: '分享我的英语学习心得',
- content: '经过三个月的坚持学习，我的英语水平有了很大提升。想和大家分享一下我的学习方法...',
- authorName: '学霸小明',
- createdAt: '2小时前',
- tag: '学习心得',
- commentCount: 12,
- likeCount: 45,
- viewCount: 234,
- liked: false
- },
- {
- id: 2,
- title: '请问日语的敬语怎么区分？',
- content: '刚学日语，对敬语的使用很困惑，什么时候用ます形，什么时候用ですか？求大神解答！',
- authorName: '日语初学者',
- createdAt: '5小时前',
- tag: '问题求助',
- commentCount: 8,
- likeCount: 15,
- viewCount: 156,
- liked: true
- },
- {
- id: 3,
- title: '推荐几个好用的韩语学习网站',
- content: '整理了一些我常用的韩语学习资源网站，有免费的也有付费的，希望对大家有帮助...',
- authorName: '韩语爱好者',
- createdAt: '昨天',
- tag: '资源分享',
- commentCount: 23,
- likeCount: 67,
- viewCount: 512,
- liked: false
- },
- {
- id: 4,
- title: '大家觉得哪个语言最难学？',
- content: '想做个调查，大家觉得英语、日语、韩语哪个最难学？为什么？',
- authorName: '语言学习者',
- createdAt: '2天前',
- tag: '话题讨论',
- commentCount: 45,
- likeCount: 89,
- viewCount: 890,
- liked: false
- }
-]);
+const posts = ref([]);
+const loading = ref(false);
 const toggleLike = async (post) => {
  try {
  if (post.liked) {
@@ -139,20 +92,32 @@ const toggleLike = async (post) => {
  post.likeCount++;
  }
  post.liked = !post.liked;
+ ElMessage.success(post.liked ? '点赞成功' : '取消点赞');
  }
  catch (error) {
  console.error('点赞失败', error);
+ ElMessage.error('操作失败');
  }
 };
 const loadPosts = async () => {
+ loading.value = true;
  try {
- const data = await postApi.getAll({ tag: activeTab.value === 'all' ? '' : activeTab.value });
- posts.value = data;
+ const res = await postApi.getAll({ tag: activeTab.value === 'all' ? '' : activeTab.value });
+ if (res.code === 200) {
+ posts.value = res.data || [];
+ }
  }
  catch (error) {
  console.error('加载帖子失败', error);
+ ElMessage.error('加载帖子失败');
+ }
+ finally {
+ loading.value = false;
  }
 };
+watch(activeTab, () => {
+ loadPosts();
+});
 onMounted(() => {
  loadPosts();
 });

@@ -20,14 +20,14 @@
         :class="['achievement-card', { unlocked: isUnlocked(achievement.id) }]"
       >
         <div class="achievement-icon">
-          <el-icon :size="36">{{ isUnlocked(achievement.id) ? 'Medal' : 'Lock' }}</el-icon>
+          {{ achievement.icon || (isUnlocked(achievement.id) ? '🏆' : '🔒') }}
         </div>
         <div class="achievement-info">
           <h3>{{ achievement.title }}</h3>
           <p class="description">{{ achievement.description }}</p>
           <div class="achievement-meta">
             <span class="points">+{{ achievement.points }} 积分</span>
-            <span class="category">{{ getCategoryText(achievement.category) }}</span>
+            <span class="category">{{ getTypeText(achievement.type) }}</span>
           </div>
         </div>
         <div v-if="isUnlocked(achievement.id)" class="unlocked-badge">
@@ -72,24 +72,24 @@ const leaderboard = ref([
  { id: 4, username: '持之以恒', totalPoints: 1890 },
  { id: 5, username: '初学者小王', totalPoints: 1560 }
 ]);
-const unlockedCount = computed(() => userAchievements.value.length);
+const unlockedCount = computed(() => userAchievements.value.filter(a => a.isUnlocked === 1).length);
 const progressPercent = computed(() => {
  if (achievements.value.length === 0)
  return 0;
  return (unlockedCount.value / achievements.value.length) * 100;
 });
 const isUnlocked = (achievementId) => {
- return userAchievements.value.some(a => a.achievementId === achievementId);
+ return userAchievements.value.some(a => a.achievementId === achievementId && a.isUnlocked === 1);
 };
-const getCategoryText = (category) => {
- const categories = {
- 'STUDY': '学习',
- 'COURSE': '课程',
- 'WORD': '单词',
- 'COMMUNITY': '社区',
- 'SIGN': '签到'
+const getTypeText = (type) => {
+ const types = {
+ 1: '学习时长',
+ 2: '课时完成',
+ 3: '单词掌握',
+ 4: '连续打卡',
+ 5: '课程完成'
  };
- return categories[category] || category;
+ return types[type] || '其他';
 };
 const getMedalIcon = (index) => {
  const icons = ['Trophy', 'Medal', 'Medal'];

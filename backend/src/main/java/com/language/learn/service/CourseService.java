@@ -2,15 +2,18 @@
 package com.language.learn.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.language.learn.dto.response.CourseDetailResponse;
 import com.language.learn.entity.Course;
 
 import java.util.List;
 
 public interface CourseService extends IService<Course> {
 
-    List<Course> getCoursesByLanguage(Long languageId);
+    List<Course> getCoursesByLanguageAndLevel(Long languageId, Integer level);
 
     Course getCourseById(Long id);
+
+    CourseDetailResponse getCourseDetailById(Long id);
 
     Course createCourse(Course course);
 

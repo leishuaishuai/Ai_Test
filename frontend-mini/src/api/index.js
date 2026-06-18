@@ -68,6 +68,12 @@ export const learningApi = {
   updateLessonProgress: (lessonId, data) => api.post(`/learning/lesson-progress/${lessonId}`, data),
   getWordProgress: wordId => api.get(`/learning/word-progress/${wordId}`),
   updateWordProgress: (wordId, data) => api.post(`/learning/word-progress/${wordId}`, data),
+  getWordProgressList: languageId => api.get('/learning/word-progress/list', { params: { languageId } }),
+  getDailyStatistics: () => api.get('/learning/daily-statistics'),
+  getWeeklyStatistics: () => api.get('/learning/weekly-statistics'),
+  getWordStats: () => api.get('/learning/word-stats'),
+  getReviewWordsCount: () => api.get('/learning/review-words/count'),
+  getReviewRecommendations: () => api.get('/learning/review-words'),
   getRecommendations: () => api.get('/learning/recommendations')
 }
 

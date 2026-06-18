@@ -52,13 +52,21 @@ public class DailySignServiceImpl extends ServiceImpl<UserDailySignMapper, UserD
         save(signRecord);
         
         int continuousDays = getContinuousSignDays(userId);
-        int points = switch (continuousDays) {
-            case 1 -> 10;
-            case 3 -> 30;
-            case 7 -> 70;
-            case 30 -> 300;
-            default -> 10;
-        };
+        
+        // 签到积分规则：基础10分 + 连续签到额外奖励
+        int basePoints = 10;
+        int extraPoints = 0;
+        
+        // 连续签到额外奖励
+        if (continuousDays >= 30) {
+            extraPoints = 300;
+        } else if (continuousDays >= 7) {
+            extraPoints = 70;
+        } else if (continuousDays >= 3) {
+            extraPoints = 30;
+        }
+        
+        int points = basePoints + extraPoints;
         
         userPointsService.addPoints(userId, points, 3, "每日签到，连续" + continuousDays + "天");
         

@@ -26,13 +26,13 @@ public class PostController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) Long languageId) {
-        List<Post> posts = postService.getPosts(page, size, languageId);
+        List<Map<String, Object>> posts = postService.getPosts(page, size, languageId);
         return ResponseEntity.ok(Map.of("code", 200, "message", "获取成功", "data", posts));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getPostById(@PathVariable Long id) {
-        Post post = postService.getPostById(id);
+        Map<String, Object> post = postService.getPostById(id);
         if (post == null) {
             return ResponseEntity.notFound().build();
         }
@@ -40,11 +40,9 @@ public class PostController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long userId = (Long) authentication.getPrincipal();
         boolean isLiked = postService.isLiked(userId, id);
+        post.put("isLiked", isLiked);
         
-        return ResponseEntity.ok(Map.of("code", 200, "message", "获取成功", "data", Map.of(
-                "post", post,
-                "isLiked", isLiked
-        )));
+        return ResponseEntity.ok(Map.of("code", 200, "message", "获取成功", "data", post));
     }
 
     @PostMapping

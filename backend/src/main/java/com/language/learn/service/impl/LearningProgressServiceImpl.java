@@ -138,7 +138,12 @@ public class LearningProgressServiceImpl implements LearningProgressService {
             userCourseProgressMapper.updateById(progress);
             
             if (progress.getIsCompleted() == 1) {
-                achievementService.checkAchievements(userId, 2, 1);
+                // 检查课程完成成就 - type=5，传递已完成的课程总数
+                long completedCoursesCount = userCourseProgressMapper.selectCount(
+                        new LambdaQueryWrapper<UserCourseProgress>()
+                                .eq(UserCourseProgress::getUserId, userId)
+                                .eq(UserCourseProgress::getIsCompleted, 1));
+                achievementService.checkAchievements(userId, 5, (int) completedCoursesCount);
                 userPointsService.addPoints(userId, 100, 1, "完成课程: " + course.getTitle());
             }
         }
@@ -188,12 +193,21 @@ public class LearningProgressServiceImpl implements LearningProgressService {
         if (!wasCompleted && progress.getIsCompleted() == 1) {
             Lesson lesson = lessonMapper.selectById(lessonId);
             if (lesson != null) {
-                achievementService.checkAchievements(userId, 2, 1);
                 userPointsService.addPoints(userId, 10, 1, "完成课时: " + lesson.getTitle());
             }
+            
+            // 检查课时完成成就 - 传递已完成的课时总数
+            long completedLessonsCount = userLessonProgressMapper.selectCount(
+                    new LambdaQueryWrapper<UserLessonProgress>()
+                            .eq(UserLessonProgress::getUserId, userId)
+                            .eq(UserLessonProgress::getIsCompleted, 1));
+            achievementService.checkAchievements(userId, 2, (int) completedLessonsCount);
         }
         
-        userPointsService.addPoints(userId, learnTime / 60, 1, "学习时长奖励");
+        // 学习时长奖励积分
+        if (learnTime != null && learnTime > 0) {
+            userPointsService.addPoints(userId, Math.max(1, learnTime / 60), 1, "学习时长奖励");
+        }
         
         return progress;
     }
@@ -219,6 +233,7 @@ public class LearningProgressServiceImpl implements LearningProgressService {
             progress.setStatus(0);
             progress.setCorrectCount(0);
             progress.setWrongCount(0);
+            progress.setProgress(0);
             userWordProgressMapper.insert(progress);
         }
         
@@ -230,6 +245,10 @@ public class LearningProgressServiceImpl implements LearningProgressService {
             if (progress.getCorrectCount() >= 5) {
                 progress.setStatus(2);
             }
+            
+            // 更新进度百分比
+            int newProgress = Math.min(100, (progress.getCorrectCount() * 20));
+            progress.setProgress(newProgress);
             
             int daysToAdd = switch (progress.getCorrectCount()) {
                 case 1 -> 1;
@@ -244,6 +263,9 @@ public class LearningProgressServiceImpl implements LearningProgressService {
             if (progress.getStatus() == 2) {
                 progress.setStatus(1);
             }
+            // 错误时降低进度
+            int newProgress = Math.max(0, progress.getProgress() - 20);
+            progress.setProgress(newProgress);
             progress.setNextReviewTime(LocalDateTime.now().plusHours(1));
         }
         
@@ -256,6 +278,95 @@ public class LearningProgressServiceImpl implements LearningProgressService {
         achievementService.checkAchievements(userId, 3, (int) masteredCount);
         
         return progress;
+    }
+
+    @Override
+    @Transactional
+    public UserWordProgress updateWordProgress(Long userId, Long wordId, Integer progressValue) {
+        UserWordProgress progress = userWordProgressMapper.selectOne(new LambdaQueryWrapper<UserWordProgress>()
+                .eq(UserWordProgress::getUserId, userId)
+                .eq(UserWordProgress::getWordId, wordId));
+        
+        if (progress == null) {
+            progress = new UserWordProgress();
+            progress.setUserId(userId);
+            progress.setWordId(wordId);
+            progress.setStatus(0);
+            progress.setCorrectCount(0);
+            progress.setWrongCount(0);
+            progress.setProgress(0);
+            userWordProgressMapper.insert(progress);
+        }
+        
+        // 根据进度值更新状态
+        progress.setProgress(progressValue);
+        if (progressValue >= 100) {
+            progress.setStatus(2); // 已掌握
+            progress.setCorrectCount(5);
+            progress.setNextReviewTime(LocalDateTime.now().plusDays(30));
+        } else if (progressValue >= 50) {
+            progress.setStatus(1); // 学习中
+            if (progress.getCorrectCount() < 3) {
+                progress.setCorrectCount(3);
+            }
+            progress.setNextReviewTime(LocalDateTime.now().plusDays(7));
+        } else if (progressValue > 0) {
+            progress.setStatus(1); // 学习中
+            if (progress.getCorrectCount() < 1) {
+                progress.setCorrectCount(1);
+            }
+            progress.setNextReviewTime(LocalDateTime.now().plusDays(1));
+        } else {
+            progress.setStatus(0); // 未学习
+            progress.setNextReviewTime(LocalDateTime.now());
+        }
+        
+        progress.setLastReviewTime(LocalDateTime.now());
+        userWordProgressMapper.updateById(progress);
+        
+        return progress;
+    }
+
+    @Override
+    public List<UserWordProgress> getWordProgressList(Long userId, Long languageId) {
+        // 获取该语言下的所有单词
+        List<Word> words = wordMapper.selectList(new LambdaQueryWrapper<Word>()
+                .eq(Word::getLanguageId, languageId));
+        
+        List<Long> wordIds = words.stream()
+                .map(Word::getId)
+                .collect(Collectors.toList());
+        
+        if (wordIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // 获取用户对这些单词的进度
+        List<UserWordProgress> progresses = userWordProgressMapper.selectList(
+                new LambdaQueryWrapper<UserWordProgress>()
+                        .eq(UserWordProgress::getUserId, userId)
+                        .in(UserWordProgress::getWordId, wordIds));
+        
+        // 为没有进度记录的单词创建默认进度对象
+        Map<Long, UserWordProgress> progressMap = progresses.stream()
+                .collect(Collectors.toMap(UserWordProgress::getWordId, p -> p));
+        
+        List<UserWordProgress> result = new ArrayList<>();
+        for (Word word : words) {
+            UserWordProgress progress = progressMap.get(word.getId());
+            if (progress == null) {
+                progress = new UserWordProgress();
+                progress.setUserId(userId);
+                progress.setWordId(word.getId());
+                progress.setStatus(0);
+                progress.setCorrectCount(0);
+                progress.setWrongCount(0);
+                progress.setProgress(0);
+            }
+            result.add(progress);
+        }
+        
+        return result;
     }
 
     @Override
@@ -289,13 +400,142 @@ public class LearningProgressServiceImpl implements LearningProgressService {
                         .eq(UserWordProgress::getUserId, userId)
                         .eq(UserWordProgress::getStatus, 1));
         
+        long newWords = userWordProgressMapper.selectCount(
+                new LambdaQueryWrapper<UserWordProgress>()
+                        .eq(UserWordProgress::getUserId, userId)
+                        .eq(UserWordProgress::getStatus, 0));
+        
+        // 计算学习天数
+        long studyDays = userLessonProgressMapper.selectList(
+                new LambdaQueryWrapper<UserLessonProgress>()
+                        .eq(UserLessonProgress::getUserId, userId)
+                        .select(UserLessonProgress::getLastLearnTime))
+                .stream()
+                .map(p -> p.getLastLearnTime() != null ? p.getLastLearnTime().toLocalDate() : null)
+                .filter(Objects::nonNull)
+                .distinct()
+                .count();
+        
         stats.put("totalLearnTime", totalLearnTime);
+        stats.put("totalHours", Math.round(totalLearnTime / 60.0));
         stats.put("completedCourses", completedCourses);
         stats.put("completedLessons", completedLessons);
         stats.put("masteredWords", masteredWords);
         stats.put("learningWords", learningWords);
+        stats.put("newWords", newWords);
+        stats.put("learnedWords", masteredWords + learningWords);
+        stats.put("studyDays", studyDays);
         
         achievementService.checkAchievements(userId, 1, (int) totalLearnTime / 60);
+        
+        return stats;
+    }
+
+    @Override
+    public Map<String, Object> getDailyStatistics(Long userId) {
+        Map<String, Object> stats = new HashMap<>();
+        LocalDateTime todayStart = LocalDateTime.now().toLocalDate().atStartOfDay();
+        LocalDateTime todayEnd = todayStart.plusDays(1);
+        
+        // 今日学习时长
+        long todayLearnTime = userLessonProgressMapper.selectList(
+                new LambdaQueryWrapper<UserLessonProgress>()
+                        .eq(UserLessonProgress::getUserId, userId)
+                        .ge(UserLessonProgress::getLastLearnTime, todayStart)
+                        .lt(UserLessonProgress::getLastLearnTime, todayEnd))
+                .stream()
+                .mapToInt(UserLessonProgress::getLearnTime)
+                .sum();
+        
+        // 今日完成课时数
+        long todayCompletedLessons = userLessonProgressMapper.selectCount(
+                new LambdaQueryWrapper<UserLessonProgress>()
+                        .eq(UserLessonProgress::getUserId, userId)
+                        .ge(UserLessonProgress::getLastLearnTime, todayStart)
+                        .lt(UserLessonProgress::getLastLearnTime, todayEnd)
+                        .eq(UserLessonProgress::getIsCompleted, 1));
+        
+        // 今日学习单词数
+        long todayLearnedWords = userWordProgressMapper.selectCount(
+                new LambdaQueryWrapper<UserWordProgress>()
+                        .eq(UserWordProgress::getUserId, userId)
+                        .ge(UserWordProgress::getLastReviewTime, todayStart)
+                        .lt(UserWordProgress::getLastReviewTime, todayEnd));
+        
+        // 今日掌握单词数
+        long todayMasteredWords = userWordProgressMapper.selectCount(
+                new LambdaQueryWrapper<UserWordProgress>()
+                        .eq(UserWordProgress::getUserId, userId)
+                        .ge(UserWordProgress::getLastReviewTime, todayStart)
+                        .lt(UserWordProgress::getLastReviewTime, todayEnd)
+                        .eq(UserWordProgress::getStatus, 2));
+        
+        stats.put("date", LocalDateTime.now().toLocalDate().toString());
+        stats.put("learnTime", todayLearnTime);
+        stats.put("hours", Math.round(todayLearnTime / 60.0));
+        stats.put("completedLessons", todayCompletedLessons);
+        stats.put("learnedWords", todayLearnedWords);
+        stats.put("masteredWords", todayMasteredWords);
+        
+        return stats;
+    }
+
+    @Override
+    public Map<String, Object> getWeeklyStatistics(Long userId) {
+        Map<String, Object> stats = new HashMap<>();
+        LocalDateTime weekStart = LocalDateTime.now().minusDays(7).toLocalDate().atStartOfDay();
+        
+        // 本周学习时长
+        long weekLearnTime = userLessonProgressMapper.selectList(
+                new LambdaQueryWrapper<UserLessonProgress>()
+                        .eq(UserLessonProgress::getUserId, userId)
+                        .ge(UserLessonProgress::getLastLearnTime, weekStart))
+                .stream()
+                .mapToInt(UserLessonProgress::getLearnTime)
+                .sum();
+        
+        // 本周完成课时数
+        long weekCompletedLessons = userLessonProgressMapper.selectCount(
+                new LambdaQueryWrapper<UserLessonProgress>()
+                        .eq(UserLessonProgress::getUserId, userId)
+                        .ge(UserLessonProgress::getLastLearnTime, weekStart)
+                        .eq(UserLessonProgress::getIsCompleted, 1));
+        
+        // 本周学习单词数
+        long weekLearnedWords = userWordProgressMapper.selectCount(
+                new LambdaQueryWrapper<UserWordProgress>()
+                        .eq(UserWordProgress::getUserId, userId)
+                        .ge(UserWordProgress::getLastReviewTime, weekStart));
+        
+        // 每日学习数据（最近7天）
+        List<Map<String, Object>> dailyData = new ArrayList<>();
+        String[] dayLabels = {"周一", "周二", "周三", "周四", "周五", "周六", "周日"};
+        for (int i = 6; i >= 0; i--) {
+            LocalDateTime dayStart = LocalDateTime.now().minusDays(i).toLocalDate().atStartOfDay();
+            LocalDateTime dayEnd = dayStart.plusDays(1);
+            
+            long dayLearnTime = userLessonProgressMapper.selectList(
+                    new LambdaQueryWrapper<UserLessonProgress>()
+                            .eq(UserLessonProgress::getUserId, userId)
+                            .ge(UserLessonProgress::getLastLearnTime, dayStart)
+                            .lt(UserLessonProgress::getLastLearnTime, dayEnd))
+                    .stream()
+                    .mapToInt(UserLessonProgress::getLearnTime)
+                    .sum();
+            
+            Map<String, Object> dayData = new HashMap<>();
+            dayData.put("label", dayLabels[dayStart.getDayOfWeek().getValue() - 1]);
+            dayData.put("hours", Math.round(dayLearnTime / 60.0));
+            dayData.put("minutes", dayLearnTime);
+            dayData.put("date", dayStart.toLocalDate().toString());
+            dailyData.add(dayData);
+        }
+        
+        stats.put("weekLearnTime", weekLearnTime);
+        stats.put("weekHours", Math.round(weekLearnTime / 60.0));
+        stats.put("weekCompletedLessons", weekCompletedLessons);
+        stats.put("weekLearnedWords", weekLearnedWords);
+        stats.put("dailyData", dailyData);
         
         return stats;
     }
@@ -310,13 +550,41 @@ public class LearningProgressServiceImpl implements LearningProgressService {
                 .map(UserCourseProgress::getCourseId)
                 .collect(Collectors.toSet());
         
-        List<Course> allCourses = courseMapper.selectList(new LambdaQueryWrapper<Course>()
-                .eq(Course::getStatus, 1)
-                .notIn(Course::getId, enrolledCourseIds)
-                .orderByDesc(Course::getCreatedAt)
-                .last("LIMIT 5"));
+        // 获取用户已学课程的难度等级分布
+        Map<Integer, Integer> levelDistribution = new HashMap<>();
+        for (UserCourseProgress progress : userProgresses) {
+            Course course = courseMapper.selectById(progress.getCourseId());
+            if (course != null && course.getLevel() != null) {
+                levelDistribution.merge(course.getLevel(), 1, Integer::sum);
+            }
+        }
         
-        return allCourses.stream()
+        // 推荐策略：优先推荐用户最常学习等级的课程，然后是相邻等级
+        int preferredLevel = levelDistribution.isEmpty() ? 1 : 
+                levelDistribution.entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .map(Map.Entry::getKey)
+                        .orElse(1);
+        
+        // 获取所有可用课程
+        List<Course> availableCourses = courseMapper.selectList(new LambdaQueryWrapper<Course>()
+                .eq(Course::getStatus, 1)
+                .notIn(!enrolledCourseIds.isEmpty(), Course::getId, enrolledCourseIds));
+        
+        // 按推荐优先级排序：先按与偏好等级的距离排序，再按创建时间排序
+        List<Course> sortedCourses = availableCourses.stream()
+                .sorted((c1, c2) -> {
+                    int diff1 = c1.getLevel() != null ? Math.abs(c1.getLevel() - preferredLevel) : 10;
+                    int diff2 = c2.getLevel() != null ? Math.abs(c2.getLevel() - preferredLevel) : 10;
+                    if (diff1 != diff2) {
+                        return diff1 - diff2;
+                    }
+                    return c2.getCreatedAt().compareTo(c1.getCreatedAt());
+                })
+                .limit(5)
+                .collect(Collectors.toList());
+        
+        return sortedCourses.stream()
                 .map(course -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("id", course.getId());
@@ -325,9 +593,59 @@ public class LearningProgressServiceImpl implements LearningProgressService {
                     map.put("coverImage", course.getCoverImage());
                     map.put("price", course.getPrice());
                     map.put("isFree", course.getIsFree());
+                    // 添加推荐理由
+                    int levelDiff = course.getLevel() != null ? Math.abs(course.getLevel() - preferredLevel) : 10;
+                    if (levelDiff == 0) {
+                        map.put("recommendReason", "适合您的学习水平");
+                    } else if (levelDiff <= 1) {
+                        map.put("recommendReason", "难度相近，推荐尝试");
+                    } else {
+                        map.put("recommendReason", "热门新课程");
+                    }
                     return map;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Map<String, Object>> getWordsForReviewRecommendation(Long userId) {
+        List<UserWordProgress> reviewProgresses = userWordProgressMapper.selectList(
+                new LambdaQueryWrapper<UserWordProgress>()
+                        .eq(UserWordProgress::getUserId, userId)
+                        .eq(UserWordProgress::getStatus, 1)
+                        .lt(UserWordProgress::getNextReviewTime, LocalDateTime.now())
+                        .orderByAsc(UserWordProgress::getNextReviewTime)
+                        .last("LIMIT 10"));
+        
+        return reviewProgresses.stream()
+                .map(progress -> {
+                    Word word = wordMapper.selectById(progress.getWordId());
+                    if (word != null) {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", word.getId());
+                        map.put("word", word.getWord());
+                        map.put("pronunciation", word.getPhonetic());
+                        map.put("meaning", word.getMeaning());
+                        map.put("example", word.getExample());
+                        map.put("correctCount", progress.getCorrectCount());
+                        map.put("wrongCount", progress.getWrongCount());
+                        map.put("lastReviewTime", progress.getLastReviewTime());
+                        map.put("nextReviewTime", progress.getNextReviewTime());
+                        return map;
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public int getReviewWordsCount(Long userId) {
+        Long count = userWordProgressMapper.selectCount(new LambdaQueryWrapper<UserWordProgress>()
+                .eq(UserWordProgress::getUserId, userId)
+                .eq(UserWordProgress::getStatus, 1)
+                .lt(UserWordProgress::getNextReviewTime, LocalDateTime.now()));
+        return count != null ? count.intValue() : 0;
     }
 
     private BigDecimal calculateProgress(Long courseId, Long userId) {

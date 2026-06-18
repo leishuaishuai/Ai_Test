@@ -24,7 +24,7 @@
             <div class="word-content">
               <div class="word-main">
                 <span class="word-text">{{ word.word }}</span>
-                <span class="pronunciation">{{ word.pronunciation }}</span>
+                <span class="pronunciation">{{ word.phonetic }}</span>
                 <button class="audio-btn" @click="playAudio(word)">
                   <el-icon>Volume</el-icon>
                 </button>
@@ -179,10 +179,11 @@
   </div>
 </template>
 
-<script setup>import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+<script setup>import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { lessonApi, wordApi, learningApi, courseApi } from '../api';
 const route = useRoute();
+const router = useRouter();
 const lesson = ref(null);
 const course = ref(null);
 const currentWords = ref([]);
@@ -202,6 +203,11 @@ const listeningQuestions = ref([
  { question: 'What is this exercise about?', options: ['Reading', 'Writing', 'Listening', 'Speaking'], selected: null, correctAnswer: 2 },
  { question: 'How should you listen?', options: ['Carelessly', 'Carefully', 'Quickly', 'Slowly'], selected: null, correctAnswer: 1 }
 ]);
+// 学习进度自动保存相关
+const startTime = ref(Date.now());
+const learnTime = ref(0);
+const autoSaveInterval = ref(null);
+const lessonProgress = ref(null);
 const getLessonTypeText = (type) => {
  const types = { 'VOCABULARY': '单词学习', 'GRAMMAR': '语法练习', 'SPEAKING': '口语跟读', 'LISTENING': '听力训练' };
  return types[type] || type;
@@ -211,30 +217,42 @@ const getCourseTitle = () => {
 };
 const loadLesson = async () => {
  try {
- lesson.value = await lessonApi.getById(route.params.lessonId);
+  const response = await lessonApi.getById(route.params.lessonId);
+  lesson.value = response.data || response;
  }
  catch (error) {
- console.error('加载课程失败', error);
+  console.error('加载课程失败', error);
  }
 };
 const loadCourse = async () => {
  if (!lesson.value)
- return;
+  return;
  try {
- course.value = await courseApi.getById(lesson.value.courseId);
+  const response = await courseApi.getById(lesson.value.courseId);
+  course.value = response.data || response;
  }
  catch (error) {
- console.error('加载课程信息失败', error);
+  console.error('加载课程信息失败', error);
  }
 };
 const loadWords = async () => {
  if (!lesson.value?.languageId)
- return;
+  return;
  try {
- currentWords.value = await wordApi.getByLanguage(lesson.value.languageId);
+  const response = await wordApi.getByLanguage(lesson.value.languageId);
+  currentWords.value = response.data || response;
  }
  catch (error) {
- console.error('加载单词失败', error);
+  console.error('加载单词失败', error);
+ }
+};
+const loadLessonProgress = async () => {
+ try {
+  const response = await learningApi.getLessonProgress(route.params.lessonId);
+  lessonProgress.value = response.data || response;
+ }
+ catch (error) {
+  console.error('加载课时进度失败', error);
  }
 };
 const initGrammarQuestions = () => {
@@ -246,45 +264,45 @@ const initGrammarQuestions = () => {
 };
 const prevWord = () => {
  if (currentIndex.value > 0) {
- currentIndex.value--;
+  currentIndex.value--;
  }
 };
 const nextWord = () => {
  if (currentIndex.value < currentWords.value.length - 1) {
- currentIndex.value++;
+  currentIndex.value++;
  }
 };
 const playAudio = (word) => {
 };
 const markWord = async (word, learned) => {
  try {
- await learningApi.updateWordProgress(word.id, { progress: learned ? 100 : 50 });
+  await learningApi.updateWordProgress(word.id, { progress: learned ? 100 : 50 });
  }
  catch (error) {
- console.error('更新单词进度失败', error);
+  console.error('更新单词进度失败', error);
  }
 };
 const selectAnswer = (questionIndex, optionIndex) => {
  const question = grammarQuestions.value[questionIndex];
  if (question.answered)
- return;
+  return;
  question.selected = optionIndex;
  question.answered = true;
 };
 const prevQuestion = () => {
  if (currentQuestionIndex.value > 0) {
- currentQuestionIndex.value--;
+  currentQuestionIndex.value--;
  }
 };
 const nextQuestion = () => {
  if (currentQuestionIndex.value < grammarQuestions.value.length - 1) {
- currentQuestionIndex.value++;
+  currentQuestionIndex.value++;
  }
 };
 const toggleRecording = () => {
  isRecording.value = !isRecording.value;
  if (!isRecording.value) {
- recordingResult.value = { text: speakingText.value.text, score: 85 };
+  recordingResult.value = { text: speakingText.value.text, score: 85 };
  }
 };
 const playRecording = () => {
@@ -303,22 +321,58 @@ const toggleTranscript = () => {
 const selectListeningAnswer = (questionIndex, optionIndex) => {
  listeningQuestions.value[questionIndex].selected = optionIndex;
 };
+// 自动保存学习进度
+const autoSaveProgress = async () => {
+  const currentLearnTime = Math.floor((Date.now() - startTime.value) / 1000);
+  learnTime.value = currentLearnTime;
+  try {
+    await learningApi.updateLessonProgress(route.params.lessonId, {
+      progress: 100,
+      learnTime: currentLearnTime
+    });
+  } catch (error) {
+    console.error('自动保存进度失败', error);
+  }
+};
 const finishLesson = async () => {
  try {
- await learningApi.updateLessonProgress(route.params.lessonId, { progress: 100 });
- alert('课程完成！');
+  const totalLearnTime = Math.floor((Date.now() - startTime.value) / 1000);
+  await learningApi.updateLessonProgress(route.params.lessonId, {
+    progress: 100,
+    learnTime: totalLearnTime,
+    score: 100
+  });
+  // 更新课程进度
+  if (lesson.value?.courseId) {
+    await learningApi.updateCourseProgress(lesson.value.courseId);
+  }
+  alert('课程完成！');
+  router.push('/courses');
  }
  catch (error) {
- console.error('完成课程失败', error);
+  console.error('完成课程失败', error);
  }
 };
 onMounted(async () => {
+ startTime.value = Date.now();
  await loadLesson();
  await loadCourse();
  await loadWords();
+ await loadLessonProgress();
  if (lesson.value?.type === 'GRAMMAR') {
- initGrammarQuestions();
+  initGrammarQuestions();
  }
+ // 启动自动保存（每30秒保存一次）
+ autoSaveInterval.value = setInterval(autoSaveProgress, 30000);
+});
+onUnmounted(() => {
+ // 清理自动保存定时器
+ if (autoSaveInterval.value) {
+  clearInterval(autoSaveInterval.value);
+  autoSaveInterval.value = null;
+ }
+ // 最后保存一次进度
+ autoSaveProgress();
 });
 </script>
 

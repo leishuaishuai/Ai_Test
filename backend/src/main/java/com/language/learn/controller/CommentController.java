@@ -26,7 +26,7 @@ public class CommentController {
             @PathVariable Long postId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {
-        List<Comment> comments = commentService.getCommentsByPost(postId, page, size);
+        List<Map<String, Object>> comments = commentService.getCommentsByPost(postId, page, size);
         return ResponseEntity.ok(Map.of("code", 200, "message", "获取成功", "data", comments));
     }
 

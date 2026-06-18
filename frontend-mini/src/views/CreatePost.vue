@@ -66,6 +66,7 @@
 <script setup>import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { postApi } from '../api';
+import { ElMessage } from 'element-plus';
 const router = useRouter();
 const form = ref({
  tag: '学习心得',
@@ -93,11 +94,20 @@ const submitPost = async () => {
  if (!isValid.value)
  return;
  try {
- await postApi.create(form.value);
+ const res = await postApi.create({
+ title: form.value.title,
+ content: form.value.content,
+ imageUrls: form.value.image,
+ languageId: null
+ });
+ if (res.code === 200) {
+ ElMessage.success('发布成功');
  router.push('/community');
+ }
  }
  catch (error) {
  console.error('发布帖子失败', error);
+ ElMessage.error('发布帖子失败');
  }
 };
 </script>

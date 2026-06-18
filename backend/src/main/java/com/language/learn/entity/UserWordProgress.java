@@ -21,6 +21,8 @@ public class UserWordProgress {
 
     private Integer wrongCount;
 
+    private Integer progress;
+
     private LocalDateTime lastReviewTime;
 
     private LocalDateTime nextReviewTime;
@@ -80,6 +82,14 @@ public class UserWordProgress {
 
     public void setWrongCount(Integer wrongCount) {
         this.wrongCount = wrongCount;
+    }
+
+    public Integer getProgress() {
+        return progress;
+    }
+
+    public void setProgress(Integer progress) {
+        this.progress = progress;
     }
 
     public LocalDateTime getLastReviewTime() {

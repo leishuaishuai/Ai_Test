@@ -25,7 +25,7 @@
       >
         <div class="word-header">
           <h3>{{ word.word }}</h3>
-          <span class="pronunciation">{{ word.pronunciation }}</span>
+          <span class="pronunciation">{{ word.phonetic }}</span>
         </div>
         <p class="meaning">{{ word.meaning }}</p>
         <p class="example" v-if="word.example">{{ word.example }}</p>
@@ -57,7 +57,7 @@
         </button>
         <div class="word-display">
           <h2>{{ currentWord.word }}</h2>
-          <p class="pronunciation">{{ currentWord.pronunciation }}</p>
+          <p class="pronunciation">{{ currentWord.phonetic }}</p>
           <button class="audio-btn" @click="playAudio">
             <el-icon>Volume</el-icon>
           </button>
@@ -95,43 +95,50 @@
   </div>
 </template>
 
-<script setup>import { ref, onMounted } from 'vue';
+<script setup>import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { languageApi, wordApi, learningApi } from '../api';
+const router = useRouter();
 const languages = ref([]);
 const words = ref([]);
 const selectedLanguage = ref('');
 const wordProgressMap = ref({});
 const currentWord = ref(null);
 const getWordProgress = (wordId) => {
- return wordProgressMap.value[wordId] || 0;
+  return wordProgressMap.value[wordId] || 0;
 };
 const loadLanguages = async () => {
  try {
- languages.value = await languageApi.getAll();
+  const response = await languageApi.getAll();
+  languages.value = response.data || response;
  }
  catch (error) {
- console.error('加载语言失败', error);
+  console.error('加载语言失败', error);
  }
 };
 const loadWords = async () => {
  if (!selectedLanguage.value)
- return;
+  return;
  try {
- words.value = await wordApi.getByLanguage(selectedLanguage.value);
+  const response = await wordApi.getByLanguage(selectedLanguage.value);
+  words.value = response.data || response;
+  // 加载该语言下所有单词的进度
+  await loadProgressForLanguage(selectedLanguage.value);
  }
  catch (error) {
- console.error('加载单词失败', error);
+  console.error('加载单词失败', error);
  }
 };
-const loadProgress = async () => {
+const loadProgressForLanguage = async (languageId) => {
  try {
- const progressList = await learningApi.getWordProgress(0);
- progressList.forEach(p => {
- wordProgressMap.value[p.wordId] = p.progress;
- });
+  const response = await learningApi.getWordProgressList(languageId);
+  const progressList = response.data || response;
+  progressList.forEach(p => {
+    wordProgressMap.value[p.wordId] = p.progress || 0;
+  });
  }
  catch (error) {
- console.error('加载进度失败', error);
+  console.error('加载进度失败', error);
  }
 };
 const showWordDetail = (word) => {
@@ -144,33 +151,40 @@ const playAudio = () => {
 };
 const markAsLearned = async () => {
  if (!currentWord.value)
- return;
+  return;
  try {
- await learningApi.updateWordProgress(currentWord.value.id, { progress: 100 });
- wordProgressMap.value[currentWord.value.id] = 100;
- closeWordDetail();
+  await learningApi.updateWordProgress(currentWord.value.id, { progress: 100 });
+  wordProgressMap.value[currentWord.value.id] = 100;
+  closeWordDetail();
  }
  catch (error) {
- console.error('更新进度失败', error);
+  console.error('更新进度失败', error);
  }
 };
 const markAsNeedReview = async () => {
  if (!currentWord.value)
- return;
+  return;
  try {
- await learningApi.updateWordProgress(currentWord.value.id, { progress: 50 });
- wordProgressMap.value[currentWord.value.id] = 50;
- closeWordDetail();
+  await learningApi.updateWordProgress(currentWord.value.id, { progress: 50 });
+  wordProgressMap.value[currentWord.value.id] = 50;
+  closeWordDetail();
  }
  catch (error) {
- console.error('更新进度失败', error);
+  console.error('更新进度失败', error);
  }
 };
 const startStudy = () => {
+ if (words.value.length > 0) {
+  router.push(`/review`);
+ }
 };
+watch(selectedLanguage, () => {
+  if (selectedLanguage.value) {
+    loadWords();
+  }
+});
 onMounted(() => {
  loadLanguages();
- loadProgress();
 });
 </script>
 
