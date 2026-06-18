@@ -4,7 +4,6 @@ package com.language.learn.controller;
 import com.language.learn.entity.Achievement;
 import com.language.learn.entity.UserAchievement;
 import com.language.learn.service.AchievementService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,10 +14,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/achievements")
-@RequiredArgsConstructor
 public class AchievementController {
 
     private final AchievementService achievementService;
+
+    public AchievementController(AchievementService achievementService) {
+        this.achievementService = achievementService;
+    }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllAchievements() {

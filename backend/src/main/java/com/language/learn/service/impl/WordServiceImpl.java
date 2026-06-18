@@ -8,20 +8,24 @@ import com.language.learn.entity.Word;
 import com.language.learn.mapper.UserWordProgressMapper;
 import com.language.learn.mapper.WordMapper;
 import com.language.learn.service.WordService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class WordServiceImpl extends ServiceImpl<WordMapper, Word> implements WordService {
 
+    private static final Logger log = LoggerFactory.getLogger(WordServiceImpl.class);
+
     private final UserWordProgressMapper userWordProgressMapper;
+
+    public WordServiceImpl(UserWordProgressMapper userWordProgressMapper) {
+        this.userWordProgressMapper = userWordProgressMapper;
+    }
 
     @Override
     public List<Word> getWordsByLanguage(Long languageId) {

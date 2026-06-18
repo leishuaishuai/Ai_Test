@@ -9,7 +9,6 @@ import com.language.learn.entity.Lesson;
 import com.language.learn.service.ChapterService;
 import com.language.learn.service.CourseService;
 import com.language.learn.service.LessonService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +18,18 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/courses")
-@RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminCourseController {
 
     private final CourseService courseService;
     private final ChapterService chapterService;
     private final LessonService lessonService;
+
+    public AdminCourseController(CourseService courseService, ChapterService chapterService, LessonService lessonService) {
+        this.courseService = courseService;
+        this.chapterService = chapterService;
+        this.lessonService = lessonService;
+    }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> listCourses(

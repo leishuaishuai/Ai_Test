@@ -3,7 +3,6 @@ package com.language.learn.controller;
 
 import com.language.learn.entity.Lesson;
 import com.language.learn.service.LessonService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,10 +11,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/lessons")
-@RequiredArgsConstructor
 public class LessonController {
 
     private final LessonService lessonService;
+
+    public LessonController(LessonService lessonService) {
+        this.lessonService = lessonService;
+    }
 
     @GetMapping("/chapter/{chapterId}")
     public ResponseEntity<Map<String, Object>> getLessonsByChapter(@PathVariable Long chapterId) {

@@ -9,21 +9,26 @@ import com.language.learn.mapper.AchievementMapper;
 import com.language.learn.mapper.UserAchievementMapper;
 import com.language.learn.service.AchievementService;
 import com.language.learn.service.UserPointsService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class AchievementServiceImpl extends ServiceImpl<AchievementMapper, Achievement> implements AchievementService {
+
+    private static final Logger log = LoggerFactory.getLogger(AchievementServiceImpl.class);
 
     private final UserAchievementMapper userAchievementMapper;
     private final UserPointsService userPointsService;
+
+    public AchievementServiceImpl(UserAchievementMapper userAchievementMapper, UserPointsService userPointsService) {
+        this.userAchievementMapper = userAchievementMapper;
+        this.userPointsService = userPointsService;
+    }
 
     @Override
     public List<Achievement> getAllAchievements() {

@@ -3,7 +3,6 @@ package com.language.learn.controller;
 
 import com.language.learn.entity.Word;
 import com.language.learn.service.WordService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,10 +13,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/words")
-@RequiredArgsConstructor
 public class WordController {
 
     private final WordService wordService;
+
+    public WordController(WordService wordService) {
+        this.wordService = wordService;
+    }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getWords(@RequestParam Long languageId) {

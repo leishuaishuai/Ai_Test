@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.language.learn.dto.response.UserResponse;
 import com.language.learn.entity.User;
 import com.language.learn.service.UserService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,11 +14,14 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/users")
-@RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
     private final UserService userService;
+
+    public AdminUserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> listUsers(

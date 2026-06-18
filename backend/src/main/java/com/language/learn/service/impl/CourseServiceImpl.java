@@ -8,19 +8,23 @@ import com.language.learn.entity.Language;
 import com.language.learn.mapper.CourseMapper;
 import com.language.learn.service.CourseService;
 import com.language.learn.service.LanguageService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class CourseServiceImpl extends ServiceImpl<CourseMapper, Course> implements CourseService {
 
+    private static final Logger log = LoggerFactory.getLogger(CourseServiceImpl.class);
+
     private final LanguageService languageService;
+
+    public CourseServiceImpl(LanguageService languageService) {
+        this.languageService = languageService;
+    }
 
     @Override
     public List<Course> getCoursesByLanguage(Long languageId) {

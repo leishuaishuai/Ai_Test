@@ -8,19 +8,23 @@ import com.language.learn.entity.Course;
 import com.language.learn.mapper.ChapterMapper;
 import com.language.learn.service.ChapterService;
 import com.language.learn.service.CourseService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class ChapterServiceImpl extends ServiceImpl<ChapterMapper, Chapter> implements ChapterService {
 
+    private static final Logger log = LoggerFactory.getLogger(ChapterServiceImpl.class);
+
     private final CourseService courseService;
+
+    public ChapterServiceImpl(CourseService courseService) {
+        this.courseService = courseService;
+    }
 
     @Override
     public List<Chapter> getChaptersByCourse(Long courseId) {

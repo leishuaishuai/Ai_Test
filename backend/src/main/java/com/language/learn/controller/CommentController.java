@@ -3,7 +3,6 @@ package com.language.learn.controller;
 
 import com.language.learn.entity.Comment;
 import com.language.learn.service.CommentService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,10 +13,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/comments")
-@RequiredArgsConstructor
 public class CommentController {
 
     private final CommentService commentService;
+
+    public CommentController(CommentService commentService) {
+        this.commentService = commentService;
+    }
 
     @GetMapping("/post/{postId}")
     public ResponseEntity<Map<String, Object>> getCommentsByPost(

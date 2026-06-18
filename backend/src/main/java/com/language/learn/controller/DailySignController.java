@@ -2,7 +2,6 @@
 package com.language.learn.controller;
 
 import com.language.learn.service.DailySignService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,10 +11,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/sign")
-@RequiredArgsConstructor
 public class DailySignController {
 
     private final DailySignService dailySignService;
+
+    public DailySignController(DailySignService dailySignService) {
+        this.dailySignService = dailySignService;
+    }
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> sign() {

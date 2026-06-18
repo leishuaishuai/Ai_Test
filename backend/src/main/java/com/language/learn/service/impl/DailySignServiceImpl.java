@@ -8,8 +8,8 @@ import com.language.learn.mapper.UserDailySignMapper;
 import com.language.learn.service.AchievementService;
 import com.language.learn.service.DailySignService;
 import com.language.learn.service.UserPointsService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +20,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class DailySignServiceImpl extends ServiceImpl<UserDailySignMapper, UserDailySign> implements DailySignService {
+
+    private static final Logger log = LoggerFactory.getLogger(DailySignServiceImpl.class);
 
     private final UserPointsService userPointsService;
     private final AchievementService achievementService;
+
+    public DailySignServiceImpl(UserPointsService userPointsService, AchievementService achievementService) {
+        this.userPointsService = userPointsService;
+        this.achievementService = achievementService;
+    }
 
     @Override
     @Transactional

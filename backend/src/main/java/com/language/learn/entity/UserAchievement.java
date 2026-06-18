@@ -2,11 +2,9 @@
 package com.language.learn.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
 @TableName("user_achievement")
 public class UserAchievement {
 
@@ -29,4 +27,68 @@ public class UserAchievement {
 
     @TableLogic
     private Integer deleted;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Long getAchievementId() {
+        return achievementId;
+    }
+
+    public void setAchievementId(Long achievementId) {
+        this.achievementId = achievementId;
+    }
+
+    public Integer getIsUnlocked() {
+        return isUnlocked;
+    }
+
+    public void setIsUnlocked(Integer isUnlocked) {
+        this.isUnlocked = isUnlocked;
+    }
+
+    public LocalDateTime getUnlockedAt() {
+        return unlockedAt;
+    }
+
+    public void setUnlockedAt(LocalDateTime unlockedAt) {
+        this.unlockedAt = unlockedAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Integer getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Integer deleted) {
+        this.deleted = deleted;
+    }
 }

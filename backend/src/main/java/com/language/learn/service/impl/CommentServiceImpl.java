@@ -9,19 +9,23 @@ import com.language.learn.entity.Post;
 import com.language.learn.mapper.CommentMapper;
 import com.language.learn.mapper.PostMapper;
 import com.language.learn.service.CommentService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> implements CommentService {
 
+    private static final Logger log = LoggerFactory.getLogger(CommentServiceImpl.class);
+
     private final PostMapper postMapper;
+
+    public CommentServiceImpl(PostMapper postMapper) {
+        this.postMapper = postMapper;
+    }
 
     @Override
     public List<Comment> getCommentsByPost(Long postId, Integer page, Integer size) {

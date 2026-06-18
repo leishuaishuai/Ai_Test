@@ -5,7 +5,6 @@ import com.language.learn.entity.UserCourseProgress;
 import com.language.learn.entity.UserLessonProgress;
 import com.language.learn.entity.UserWordProgress;
 import com.language.learn.service.LearningProgressService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,10 +15,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/learning")
-@RequiredArgsConstructor
 public class LearningProgressController {
 
     private final LearningProgressService learningProgressService;
+
+    public LearningProgressController(LearningProgressService learningProgressService) {
+        this.learningProgressService = learningProgressService;
+    }
 
     @GetMapping("/statistics")
     public ResponseEntity<Map<String, Object>> getStatistics() {

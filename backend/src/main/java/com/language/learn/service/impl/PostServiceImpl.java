@@ -9,19 +9,23 @@ import com.language.learn.entity.PostLike;
 import com.language.learn.mapper.PostLikeMapper;
 import com.language.learn.mapper.PostMapper;
 import com.language.learn.service.PostService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
 
+    private static final Logger log = LoggerFactory.getLogger(PostServiceImpl.class);
+
     private final PostLikeMapper postLikeMapper;
+
+    public PostServiceImpl(PostLikeMapper postLikeMapper) {
+        this.postLikeMapper = postLikeMapper;
+    }
 
     @Override
     public List<Post> getPosts(Integer page, Integer size, Long languageId) {

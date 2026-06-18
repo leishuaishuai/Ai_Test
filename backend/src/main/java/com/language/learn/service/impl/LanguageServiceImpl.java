@@ -6,17 +6,17 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.language.learn.entity.Language;
 import com.language.learn.mapper.LanguageMapper;
 import com.language.learn.service.LanguageService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class LanguageServiceImpl extends ServiceImpl<LanguageMapper, Language> implements LanguageService {
+
+    private static final Logger log = LoggerFactory.getLogger(LanguageServiceImpl.class);
 
     @Override
     public List<Language> getAllLanguages() {

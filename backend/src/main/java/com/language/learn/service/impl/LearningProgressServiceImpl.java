@@ -8,8 +8,8 @@ import com.language.learn.mapper.*;
 import com.language.learn.service.AchievementService;
 import com.language.learn.service.LearningProgressService;
 import com.language.learn.service.UserPointsService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +18,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class LearningProgressServiceImpl implements LearningProgressService {
+
+    private static final Logger log = LoggerFactory.getLogger(LearningProgressServiceImpl.class);
 
     private final UserCourseProgressMapper userCourseProgressMapper;
     private final UserLessonProgressMapper userLessonProgressMapper;
@@ -32,6 +32,26 @@ public class LearningProgressServiceImpl implements LearningProgressService {
     private final WordMapper wordMapper;
     private final AchievementService achievementService;
     private final UserPointsService userPointsService;
+
+    public LearningProgressServiceImpl(UserCourseProgressMapper userCourseProgressMapper,
+                                       UserLessonProgressMapper userLessonProgressMapper,
+                                       UserWordProgressMapper userWordProgressMapper,
+                                       ChapterMapper chapterMapper,
+                                       LessonMapper lessonMapper,
+                                       CourseMapper courseMapper,
+                                       WordMapper wordMapper,
+                                       AchievementService achievementService,
+                                       UserPointsService userPointsService) {
+        this.userCourseProgressMapper = userCourseProgressMapper;
+        this.userLessonProgressMapper = userLessonProgressMapper;
+        this.userWordProgressMapper = userWordProgressMapper;
+        this.chapterMapper = chapterMapper;
+        this.lessonMapper = lessonMapper;
+        this.courseMapper = courseMapper;
+        this.wordMapper = wordMapper;
+        this.achievementService = achievementService;
+        this.userPointsService = userPointsService;
+    }
 
     @Override
     public UserCourseProgress getCourseProgress(Long userId, Long courseId) {

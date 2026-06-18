@@ -3,7 +3,6 @@ package com.language.learn.controller;
 
 import com.language.learn.entity.UserPoints;
 import com.language.learn.service.UserPointsService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,10 +13,13 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/points")
-@RequiredArgsConstructor
 public class PointsController {
 
     private final UserPointsService userPointsService;
+
+    public PointsController(UserPointsService userPointsService) {
+        this.userPointsService = userPointsService;
+    }
 
     @GetMapping("/total")
     public ResponseEntity<Map<String, Object>> getTotalPoints() {
